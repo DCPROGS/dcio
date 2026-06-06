@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "dcio"
+version = "0.1.0"
+description = "I/O library for electrophysiology file formats used by the DCProgs suite"
+authors = [{ name = "Remis Lape" }]
+requires-python = ">=3.11"
+dependencies = ["numpy>=2.0"]
+
+[project.optional-dependencies]
+dev = ["pytest>=7.4", "pytest-cov"]
+
+[project.scripts]
+dcio-scn2txt = "dcio.cli.scn2txt:main"
+dcio-txt2scn = "dcio.cli.txt2scn:main"
+dcio-csv2ssd = "dcio.cli.csv2ssd:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["dcio*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-v --tb=short"
+
+[tool.coverage.run]
+source = ["dcio"]
