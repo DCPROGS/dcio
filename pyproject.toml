@@ -5,10 +5,36 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "dcio"
 version = "0.1.0"
-description = "I/O library for electrophysiology file formats used by the DCProgs suite"
+description = "I/O and record layer for electrophysiology file formats used by the DCPROGS suite"
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
 authors = [{ name = "Remis Lape" }]
 requires-python = ">=3.11"
 dependencies = ["numpy>=2.0"]
+keywords = [
+    "electrophysiology",
+    "single-channel",
+    "ion-channel",
+    "patch-clamp",
+    "scn",
+    "dcprogs",
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering :: Bio-Informatics",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Operating System :: OS Independent",
+]
+
+[project.urls]
+Homepage = "https://github.com/DCPROGS/dcio"
+Repository = "https://github.com/DCPROGS/dcio"
+Issues = "https://github.com/DCPROGS/dcio/issues"
 
 [project.optional-dependencies]
 dev = ["pytest>=7.4", "pytest-cov"]
