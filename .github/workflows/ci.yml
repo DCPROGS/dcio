@@ -1,0 +1,156 @@
+# dcio has never had CI. That was tolerable while it was one person's file
+# reader; it is not now that it is becoming the record layer under SCALCS,
+# EKDIST and HJCFIT, where a regression reaches three other projects.
+#
+# The suite is fast -- under two seconds -- so the matrix covers every
+# supported Python and all three platforms rather than one representative
+# build. Reading and writing SCN means struct packing and endianness, which is
+# exactly the kind of thing that is fine on the machine it was written on.
+
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # requires-python is >=3.11; every version in that range is tested.
+          - { name: linux-py311, os: ubuntu-24.04, python: '3.11' }
+          - { name: linux-py312, os: ubuntu-24.04, python: '3.12' }
+          - { name: linux-py313, os: ubuntu-24.04, python: '3.13', coverage: true }
+          - { name: macos,       os: macos-14,     python: '3.13' }
+          - { name: windows,     os: windows-2022, python: '3.12' }
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: ${{ matrix.python }}
+
+      - name: Install
+        shell: bash
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e '.[dev]'
+          pip list
+
+      # Several tests take a legacy SCN from examples/ and skip when it is
+      # absent. A skip is a silent pass: if those files ever stop being
+      # checked out, the golden burst counts and the round-trip checks against
+      # real records would quietly stop running while CI stayed green. Assert
+      # they are here rather than trusting the skip to be noticed.
+      - name: Example records present
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import sys
+          required = ["glyr_simulated.scn", "glyr_experimental.scn"]
+          d = Path("examples/scn")
+          missing = [n for n in required if not (d / n).is_file()]
+          if missing:
+              sys.exit("missing example records (tests would skip): " + ", ".join(missing))
+          print("example records present:", ", ".join(required))
+          PY
+
+      - name: Tests
+        shell: bash
+        run: pytest
+
+      - name: Tests with coverage
+        if: matrix.coverage
+        shell: bash
+        run: pytest --cov --cov-report=term-missing
+
+  # numpy>=2.0 is declared but nothing has ever run against 2.0 itself, so the
+  # floor is an assertion rather than a tested fact. NEP 50 changed how scalars
+  # promote, and impose_resolution does float arithmetic on array elements --
+  # if the real minimum has drifted upward, this is where it shows.
+  oldest:
+    name: oldest-deps
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+
+      - name: Install with the declared minimum numpy
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e '.[dev]'
+          pip install 'numpy==2.0.*'
+          pip list
+
+      - name: Tests
+        run: pytest
+
+  package:
+    name: package
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+
+      - name: Build sdist and wheel
+        run: |
+          python -m pip install --upgrade pip build
+          python -m build
+
+      # An editable install resolves imports and console scripts from the
+      # source tree, so it cannot catch a package that was never declared or an
+      # entry point that does not resolve. Installing the built wheel into a
+      # clean environment is the only check that can.
+      - name: Install the wheel and check it
+        run: |
+          python -m venv /tmp/check
+          /tmp/check/bin/pip install --upgrade pip
+          /tmp/check/bin/pip install dist/*.whl
+          cd /tmp
+          /tmp/check/bin/python - <<'PY'
+          from dcio.formats import scn, ssd, scan_ini
+          from dcio.analysis import (
+              Periods, SingleChannelRecord,
+              from_scn, impose_resolution, set_periods,
+          )
+          print("installed wheel imports formats and analysis")
+          PY
+
+      # The three console scripts are declared in pyproject and have never been
+      # run from an installed wheel. A broken entry point is invisible until a
+      # user types the command.
+      - name: Console scripts resolve
+        run: |
+          for cmd in dcio-scn2txt dcio-txt2scn dcio-csv2ssd; do
+            echo "--- $cmd"
+            /tmp/check/bin/$cmd --help > /dev/null || exit 1
+          done
+          echo "all three console scripts run"
