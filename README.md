@@ -103,6 +103,29 @@ Both follow SCAN's time-course fitting, which leaves the final interval of a
 record with no defined length. Dropping the runs at each end instead loses two
 bursts from every record.
 
+### Dwell-time histograms
+
+`dcio.analysis.histogram` carries the log-binning arithmetic -- bin counts, bin
+edges, and staircase coordinates -- and nothing else. Drawing stays with the
+caller, because EKDIST, HJCFIT and SCALCS legitimately want different figures
+over the same bins.
+
+```python
+import numpy as np
+from dcio.analysis.histogram import log_bin_histogram, staircase
+
+counts, edges, nbdec = log_bin_histogram(record.periods.open_intervals, tres=25e-6)
+x, y = staircase(edges, counts)
+ax.semilogx(x, np.sqrt(y))          # Sigworth-Sine square-root ordinate
+```
+
+Bins start at the resolution and each is `10 ** (1/nbdec)` wider than the last,
+with `nbdec` chosen from the sample size (5 / 8 / 10 / 12). The last edge is
+rounded up to a whole decade, so no interval falls outside the bins -- writing
+that round-up with a natural log instead, as earlier code in this stack did,
+gives a power of e and lets `numpy.histogram` drop the tail of the distribution
+without saying so.
+
 ## Running tests
 
 ```bash
