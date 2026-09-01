@@ -141,6 +141,7 @@ jobs:
               Periods, SingleChannelRecord,
               from_scn, impose_resolution, set_periods,
               extract_bursts, extract_burst_intervals, bursts_from_record,
+              log_bin_edges, log_bin_histogram, staircase,
           )
           print("installed wheel imports formats and analysis")
           PY

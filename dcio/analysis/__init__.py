@@ -1,5 +1,11 @@
 """Single-channel record analysis."""
 
+from dcio.analysis.histogram import (
+    bins_per_decade,
+    log_bin_edges,
+    log_bin_histogram,
+    staircase,
+)
 from dcio.analysis.bursts import (
     bursts_from_record,
     extract_burst_intervals,
@@ -22,4 +28,8 @@ __all__ = [
     "extract_bursts",
     "extract_burst_intervals",
     "bursts_from_record",
+    "bins_per_decade",
+    "log_bin_edges",
+    "log_bin_histogram",
+    "staircase",
 ]
