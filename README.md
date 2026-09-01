@@ -68,6 +68,41 @@ write("output.scn", intervals_s, amplitudes, flags,
 | `shut_mask` | `ndarray[bool]` | True for shut intervals |
 | `usable_mask` | `ndarray[bool]` | True when `flags & 8 == 0` |
 
+## Record analysis
+
+Beyond file I/O, `dcio.analysis` carries the record layer shared by the rest of
+the DCPROGS stack: applying a dead time, grouping the result into open and shut
+periods, and cutting it into bursts.
+
+```python
+from dcio.formats.scn import read
+from dcio.analysis import from_scn, bursts_from_record
+
+record = from_scn(read("myrecording.scn"), tres=25e-6)   # 25 us dead time
+lengths, n_openings = bursts_from_record(record, tcrit=4e-3)
+
+print(len(lengths), "bursts,", n_openings.mean(), "openings each")
+```
+
+`bursts_from_record` segments the record's **periods**, not its resolved
+intervals. `impose_resolution` emits a fresh open interval at every change of
+fitted amplitude, so a record idealised with sub-conductance levels contains
+runs of consecutive openings; segmenting those directly gives bursts that do
+not alternate open/shut. Burst count and lengths are the same either way, the
+number of openings per burst is not.
+
+Two conventions are worth stating, because implementations in this stack have
+differed on them:
+
+- no gap longer than `tcrit` is required before the first burst -- the first
+  defined opening starts one;
+- an unusable interval ends the burst before it, and its (meaningless)
+  duration is never compared with `tcrit`.
+
+Both follow SCAN's time-course fitting, which leaves the final interval of a
+record with no defined length. Dropping the runs at each end instead loses two
+bursts from every record.
+
 ## Running tests
 
 ```bash
