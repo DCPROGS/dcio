@@ -140,6 +140,7 @@ jobs:
           from dcio.analysis import (
               Periods, SingleChannelRecord,
               from_scn, impose_resolution, set_periods,
+              extract_bursts, extract_burst_intervals, bursts_from_record,
           )
           print("installed wheel imports formats and analysis")
           PY
