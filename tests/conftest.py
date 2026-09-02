@@ -45,3 +45,9 @@ def legacy_experimental_scn() -> Path:
     if not p.exists():
         pytest.skip("glyr_experimental.scn not found.")
     return p
+
+
+@pytest.fixture()
+def examples_dir() -> Path:
+    """Directory holding the example SCN records."""
+    return EXAMPLES_SCN
