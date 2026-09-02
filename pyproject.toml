@@ -4,13 +4,13 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "dcio"
-version = "0.1.0"
+version = "0.1.1"
 description = "I/O and record layer for electrophysiology file formats used by the DCPROGS suite"
 readme = "README.md"
 license = "MIT"
 license-files = ["LICENSE"]
 authors = [{ name = "Remis Lape" }]
-requires-python = ">=3.11"
+requires-python = ">=3.10"
 dependencies = ["numpy>=2.0"]
 keywords = [
     "electrophysiology",
@@ -25,6 +25,7 @@ classifiers = [
     "Intended Audience :: Science/Research",
     "Topic :: Scientific/Engineering :: Bio-Informatics",
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",

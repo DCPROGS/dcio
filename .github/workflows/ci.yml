@@ -33,7 +33,10 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # requires-python is >=3.11; every version in that range is tested.
+          # requires-python is >=3.10; every version in that range is tested.
+          # 3.10 is the floor because SCALCS supports it, and dcio uses no
+          # 3.11 syntax or stdlib -- the original >=3.11 was never earned.
+          - { name: linux-py310, os: ubuntu-24.04, python: '3.10' }
           - { name: linux-py311, os: ubuntu-24.04, python: '3.11' }
           - { name: linux-py312, os: ubuntu-24.04, python: '3.12' }
           - { name: linux-py313, os: ubuntu-24.04, python: '3.13', coverage: true }
@@ -96,7 +99,7 @@ jobs:
 
       - uses: actions/setup-python@v6
         with:
-          python-version: '3.11'
+          python-version: '3.10'
 
       - name: Install with the declared minimum numpy
         run: |
