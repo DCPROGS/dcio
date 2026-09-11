@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "dcio"
-version = "0.1.1"
+version = "0.1.2"
 description = "I/O and record layer for electrophysiology file formats used by the DCPROGS suite"
 readme = "README.md"
 license = "MIT"

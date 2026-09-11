@@ -38,10 +38,43 @@ jobs:
         with:
           python-version: '3.12'
 
+      # A tag that disagrees with the version it claims to publish names the
+      # release one thing on GitHub and another on PyPI, and the number cannot
+      # be taken back. SCALCS and HJCFIT both have this gate; dcio did not, and
+      # 0.1.1 went out with dcio.__version__ still reading 0.1.0 -- a different
+      # drift, now fixed at the source by deriving it from the metadata.
+      - name: Tag matches the version
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          python - <<'PY'
+          import os, pathlib, re
+          proj = re.search(r'^version = "([^"]+)"',
+                           pathlib.Path('pyproject.toml').read_text(), re.M).group(1)
+          tag = os.environ['GITHUB_REF'].removeprefix('refs/tags/v')
+          if proj != tag:
+              raise SystemExit(f'tag v{tag} does not match version {proj}')
+          print('tag and version agree:', proj)
+          PY
+
       - name: Build
         run: |
           python -m pip install --upgrade pip build twine
           python -m build
+
+      # The one thing a hardcoded __version__ could get wrong, asserted against
+      # the built artifact rather than the source tree.
+      - name: The wheel reports its own version
+        run: |
+          python -m venv /tmp/vcheck
+          /tmp/vcheck/bin/pip install --quiet dist/*.whl
+          /tmp/vcheck/bin/python - <<'PY'
+          import re, pathlib, dcio
+          proj = re.search(r'^version = "([^"]+)"',
+                           pathlib.Path('pyproject.toml').read_text(), re.M).group(1)
+          if dcio.__version__ != proj:
+              raise SystemExit(f'wheel reports {dcio.__version__}, pyproject says {proj}')
+          print('installed wheel reports', dcio.__version__)
+          PY
 
       # twine check catches the metadata problems that make a PyPI page render
       # badly or an upload fail outright -- a README that is not valid
